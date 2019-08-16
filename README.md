@@ -22,7 +22,7 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        args: Backlog "Up next"
+        args: Backlog Inbox "Up next"
 ```
 
-> Note: Replace `Backlog` with your project name and `Up next` with your project column.
+> Note: Replace `Backlog` with your project name, `Inbox` with your inbox column name, and `Up next` with your assigned column name.
