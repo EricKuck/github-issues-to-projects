@@ -13,12 +13,12 @@ on: issues
 name: ✨ Create and move project cards
 jobs:
   build:
-    name: EricKuck/move-assigned-issue-column
+    name: EricKuck/github-issues-to-projects
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@master
-    - name: EricKuck/move-assigned-issue-column
-      uses: EricKuck/move-assigned-issue-column@master
+    - name: EricKuck/github-issues-to-projects
+      uses: EricKuck/github-issues-to-projects@master
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
