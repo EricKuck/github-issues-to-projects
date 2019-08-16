@@ -4,20 +4,20 @@ const { Toolkit } = require( 'actions-toolkit' );
 Toolkit.run( async ( tools ) => {
   try {
     const { action, issue } = tools.context.payload;
-    if( action !== 'assigned' ){
-      tools.exit.neutral( `Event ${ action } is not supported by this action.` )
-    }
 
     // Get the arguments
     const projectName = tools.arguments._[ 0 ];
-    const columnName  = tools.arguments._[ 1 ];
+    const inboxColumnName  = tools.arguments._[ 1 ];
+    const assignedColumnName  = tools.arguments._[ 2 ];
 
     const secret = process.env.GH_PAT ? process.env.GH_PAT : process.env.GITHUB_TOKEN;
 
-    // Check if there are existing asignees
-    if( issue.assignee && issue.assignee.length ) {
-      const assigneeLogins = issue.assignee.map( data => data.login ).join( ', ' );
-      tools.exit.neutral( `${ assigneeLogins } are already assigned. Leaving ${ issue.title } in current column.` );
+    if( action === 'opened' ){
+      tools.log('Creating a card for an open issue…')
+    } else if (action === 'assigned' && (!issue.assignee || issue.assignee.length === 0)) {
+      tools.log('Moving card for an assigned issue…')
+    } else {
+      tools.exit.success('Performing no actions')
     }
 
     // Fetch the column ids and names
@@ -67,24 +67,27 @@ Toolkit.run( async ( tools ) => {
       }
     });
 
-    // Get the card id and the column name
-    const cardId = resource.projectCards.nodes 
+    if (action === 'assigned' && (!issue.assignee || issue.assignee.length === 0)) {
+      // Get the card id and the column name
+      const cardId = resource.projectCards.nodes 
       && resource.projectCards.nodes[ 0 ]
       && resource.projectCards.nodes[ 0 ].id
       || null;
 
-    const currentColumn = resource.projectCards.nodes
+      const currentColumn = resource.projectCards.nodes
       && resource.projectCards.nodes[ 0 ]
       && resource.projectCards.nodes[ 0 ].column.name
       || null;
 
-    if( cardId === null || currentColumn === null ){
-      tools.exit.failure( `The issue ${ issue.title } is not in a project.` );
+      if( cardId === null || currentColumn === null ){
+        tools.exit.failure( `The issue ${ issue.title } is not in a project.` );
+      }
+
+      if( currentColumn !== inboxColumnName ){
+        tools.exit.success( `The issue ${ issue.title } has already advanced from ${ inboxColumnName }.` );
+      }
     }
 
-    if( currentColumn === columnName ){
-      tools.exit.neutral( `The issue ${ issue.title } is already in ${ columnName }.` );
-    }
 
     // Get an array of all matching projects
     const repoProjects = resource.repository.projects.nodes || [];
@@ -106,16 +109,22 @@ Toolkit.run( async ( tools ) => {
       tools.exit.failure( `Could not find "${ projectName }" with "${ columnName }" column` );
     }
 
-    // Move the cards to the columns
-    const moveCards = columns.map( column => {
-      return new Promise( async( resolve, reject ) => {
+    // Do the card thing
+    const cardAction = columns.map( column => {
+      return new Promise( async( resolve, reject ) => {            
         try {
           await tools.github.graphql({
-            query: `mutation {
-              moveProjectCard( input: { cardId: "${ cardId }", columnId: "${ column.id }" }) {
-                clientMutationId
-              }
-            }`,
+            query: action === 'opened' ?
+            `mutation {
+                addProjectCard( input: { contentId: "${ issue.node_id }", projectColumnId: "${ column.id }" }) {
+                  clientMutationId
+                }
+              }` :
+              `mutation {
+                moveProjectCard( input: { cardId: "${ cardId }", columnId: "${ column.id }" }) {
+                  clientMutationId
+                }
+              }`,
             headers: {
               authorization: `token ${ secret }`
             }
@@ -130,12 +139,14 @@ Toolkit.run( async ( tools ) => {
     });
 
     // Wait for completion
-    await Promise.all( moveCards ).catch( error => tools.exit.failure( error ) );
+    await Promise.all( cardAction ).catch( error => tools.exit.failure( error ) );
 
     // Log success message
-    tools.log.success(
-      `Moved newly assigned issue ${ issue.title } to ${ columnName }.`
-    );
+    if (action === 'opened') {
+      tools.log.success( `Added ${ issue.title } to ${ projectName } in ${ columnName }.` );
+    } else if (action == 'assigned') {
+        tools.log.success( `Moved newly assigned issue ${ issue.title } to ${ columnName }.` );
+    }
   }
   catch( error ){
     tools.exit.failure( error );
