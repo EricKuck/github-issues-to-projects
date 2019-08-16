@@ -9,7 +9,7 @@ Toolkit.run( async ( tools ) => {
     const projectName = tools.arguments._[ 0 ];
     const inboxColumnName  = tools.arguments._[ 1 ];
     const assignedColumnName  = tools.arguments._[ 2 ];
-
+    
     const secret = process.env.GH_PAT ? process.env.GH_PAT : process.env.GITHUB_TOKEN;
 
     if( action === 'opened' ){
@@ -19,6 +19,8 @@ Toolkit.run( async ( tools ) => {
     } else {
       tools.exit.success('Performing no actions')
     }
+
+    const columnName = action === 'opened' ? inboxColumnName : assignedColumnName
 
     // Fetch the column ids and names
     const { resource } = await tools.github.graphql({
