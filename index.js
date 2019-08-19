@@ -69,15 +69,13 @@ Toolkit.run( async ( tools ) => {
       }
     });
 
-    var cardId;
-    var currentColumn;
-    if (action === 'assigned' && (!issue.assignee || issue.assignee.length === 0)) {
-      // Get the card id and the column name
-      cardId = resource.projectCards.nodes 
+    const cardId = resource.projectCards.nodes 
       && resource.projectCards.nodes[ 0 ]
       && resource.projectCards.nodes[ 0 ].id
       || null;
-
+    
+    var currentColumn;
+    if (action === 'assigned' && (!issue.assignee || issue.assignee.length === 0)) {
       currentColumn = resource.projectCards.nodes
       && resource.projectCards.nodes[ 0 ]
       && resource.projectCards.nodes[ 0 ].column.name
@@ -90,8 +88,9 @@ Toolkit.run( async ( tools ) => {
       if( currentColumn !== inboxColumnName ){
         tools.exit.success( `The issue ${ issue.title } has already advanced from ${ inboxColumnName }.` );
       }
+    } else if (action === 'opened' && cardId) {
+      tools.exit.success( `The issue ${ issue.title } has already been added to the proejct.` );
     } else {
-      cardId = null;
       currentColumn = null;
     }
 
