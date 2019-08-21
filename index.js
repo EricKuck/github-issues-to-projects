@@ -5,9 +5,9 @@ Toolkit.run( async ( tools ) => {
   try {
     const { action, issue } = tools.context.payload;
 
-    tools.log("${ action }");
-    tools.log("${ issue }");
-    tools.log("${ tools.context.payload }");
+    tools.log("action: " + action);
+    tools.log("issue: " + issue);
+    tools.log("tools.context.payload: " + tools.context.payload);
 
     // Get the arguments
     const projectName = tools.arguments._[ 0 ];
