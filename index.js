@@ -5,9 +5,6 @@ Toolkit.run( async ( tools ) => {
   try {
     const { action, issue } = tools.context.payload;
 
-    tools.log("action: " + action);
-    tools.log("assignee: " + issue.assignee);
-
     // Get the arguments
     const projectName = tools.arguments._[ 0 ];
     const inboxColumnName  = tools.arguments._[ 1 ];
