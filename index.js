@@ -6,8 +6,7 @@ Toolkit.run( async ( tools ) => {
     const { action, issue } = tools.context.payload;
 
     tools.log("action: " + action);
-    tools.log("issue: " + issue);
-    tools.log("tools.context.payload: " + tools.context.payload);
+    tools.log("assignee: " + issue.assignee);
 
     // Get the arguments
     const projectName = tools.arguments._[ 0 ];
@@ -24,7 +23,7 @@ Toolkit.run( async ( tools ) => {
       tools.exit.success('Performing no actions')
     }
 
-    const columnName = action === 'opened' ? inboxColumnName : assignedColumnName
+    const columnName = action === 'opened' && issue.assignee == null ? inboxColumnName : assignedColumnName
 
     // Fetch the column ids and names
     const { resource } = await tools.github.graphql({
